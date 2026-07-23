@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, Check, Clock } from "lucide-react";
+import { Check, Clock } from "lucide-react";
 import { FUTURE_COURSES } from "@/lib/constants";
 import { getCourseBySlug } from "@/lib/course-data";
 import { cn, formatDuration } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { MagneticEnrollButton } from "@/components/shared/magnetic-enroll-button";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { FadeIn } from "@/components/shared/fade-in";
 
@@ -157,12 +157,9 @@ export function CourseComparison() {
 
         <FadeIn delay={0.2}>
           <div className="mt-8 text-center">
-            <Button variant="premium" asChild>
-              <Link href="/courses">
-                Enroll Now
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+            <MagneticEnrollButton href="/courses" icon="arrow-right">
+              Enroll Now
+            </MagneticEnrollButton>
           </div>
         </FadeIn>
       </div>

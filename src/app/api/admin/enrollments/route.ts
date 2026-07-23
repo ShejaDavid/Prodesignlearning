@@ -11,6 +11,7 @@ import {
 import { SITE_CONFIG } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import { syncCohortSeats } from "@/lib/cohort-seats";
+import { emailEquals, normalizeEmail } from "@/lib/email-normalize";
 
 export async function POST(request: Request) {
   try {
@@ -29,8 +30,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const { firstName, lastName, email, phone, cohortId, accessExpiresAt } =
-      parsed.data;
+    const { firstName, lastName, phone, cohortId, accessExpiresAt } = parsed.data;
+    const email = normalizeEmail(parsed.data.email);
 
     const cohort = await db.cohort.findUnique({
       where: { id: cohortId },
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     // Upsert the student by email. New users are created unactivated (no password).
-    let user = await db.user.findUnique({ where: { email } });
+    let user = await db.user.findFirst({ where: { email: emailEquals(email) } });
     const isNewUser = !user;
     if (!user) {
       user = await db.user.create({

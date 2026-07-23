@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { contactSchema } from "@/lib/validations";
 import { db } from "@/lib/db";
+import {
+  contactNotificationEmail,
+  FORM_NOTIFICATION_RECIPIENTS,
+  sendEmail,
+} from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -30,6 +35,18 @@ export async function POST(request: Request) {
       console.error("Contact submission DB error:", dbError);
       console.log("[Contact Mock]", data);
     }
+
+    const notification = contactNotificationEmail(data);
+    await Promise.all(
+      FORM_NOTIFICATION_RECIPIENTS.map((recipient) =>
+        sendEmail({
+          to: recipient,
+          subject: notification.subject,
+          html: notification.html,
+          emailType: "contact_submission",
+        })
+      )
+    );
 
     return NextResponse.json({ success: true, message: "Message sent successfully" });
   } catch (error) {

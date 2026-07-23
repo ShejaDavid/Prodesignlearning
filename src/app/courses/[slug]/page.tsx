@@ -1,36 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Script from "next/script";
-import {
-  Award,
-  BadgeCheck,
-  BookOpen,
-  Clock,
-  Laptop,
-  MessageCircle,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
 import { CourseHero } from "@/components/course/course-hero";
-import { CurriculumAccordion } from "@/components/course/curriculum-accordion";
+import { CourseAccordion } from "@/components/course/course-accordion";
 import { CourseSidebar } from "@/components/course/course-sidebar";
-import { InstructorProfile } from "@/components/course/instructor-profile";
-import { CourseFaq } from "@/components/course/course-faq";
 import { FadeIn } from "@/components/ui/fade-in";
-import { Card, CardContent } from "@/components/ui/card";
 import { SITE_CONFIG, SEO_KEYWORDS } from "@/lib/constants";
 import { getPublicCourseBySlug } from "@/lib/public-courses";
 import { calculateTax, formatCurrency } from "@/lib/utils";
-
-const FEATURE_ICONS: Record<string, LucideIcon> = {
-  Clock,
-  Users,
-  Award,
-  BadgeCheck,
-  Laptop,
-  BookOpen,
-  MessageCircle,
-};
 
 interface CoursePageProps {
   params: Promise<{ slug: string }>;
@@ -38,13 +15,17 @@ interface CoursePageProps {
 
 export const dynamic = "force-dynamic";
 
+function isViewableCourse(status: string) {
+  return status !== "coming-soon";
+}
+
 export async function generateMetadata({
   params,
 }: CoursePageProps): Promise<Metadata> {
   const { slug } = await params;
   const course = await getPublicCourseBySlug(slug);
 
-  if (!course || course.status !== "active") {
+  if (!course || !isViewableCourse(course.status)) {
     return { title: "Course Not Found" };
   }
 
@@ -71,7 +52,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
   const { slug } = await params;
   const course = await getPublicCourseBySlug(slug);
 
-  if (!course || course.status !== "active") {
+  if (!course || !isViewableCourse(course.status)) {
     notFound();
   }
 
@@ -148,7 +129,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
 
       <div className="container mx-auto max-w-7xl px-4 py-16">
         <div className="grid gap-12 lg:grid-cols-3">
-          <div className="space-y-16 lg:col-span-2">
+          <div className="space-y-8 lg:col-span-2">
             <FadeIn>
               <section>
                 <h2 className="text-2xl font-bold md:text-3xl">Course Overview</h2>
@@ -158,84 +139,13 @@ export default async function CoursePage({ params }: CoursePageProps) {
               </section>
             </FadeIn>
 
-            {course.learningOutcomes.length > 0 && (
-              <FadeIn>
-                <section>
-                  <h2 className="mb-6 text-2xl font-bold md:text-3xl">
-                    What You&apos;ll Learn
-                  </h2>
-                  <ul className="grid gap-3 sm:grid-cols-2">
-                    {course.learningOutcomes.map((outcome) => (
-                      <li
-                        key={outcome}
-                        className="flex items-start gap-3 rounded-xl border border-border bg-muted/30 p-4 text-sm"
-                      >
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/10 text-success">
-                          ✓
-                        </span>
-                        {outcome}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              </FadeIn>
-            )}
-
-            {course.curriculum.length > 0 && (
-              <section id="curriculum">
-                <FadeIn>
-                  <h2 className="mb-6 text-2xl font-bold md:text-3xl">
-                    Course Curriculum
-                  </h2>
-                </FadeIn>
-                <CurriculumAccordion curriculum={course.curriculum} />
-              </section>
-            )}
-
-            {course.features.length > 0 && (
-              <FadeIn>
-                <section>
-                  <h2 className="mb-6 text-2xl font-bold md:text-3xl">
-                    Course Features
-                  </h2>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {course.features.map((feature) => {
-                      const Icon = FEATURE_ICONS[feature.icon] ?? Award;
-                      return (
-                        <Card key={feature.title}>
-                          <CardContent className="flex gap-4 p-5">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary/10">
-                              <Icon className="h-5 w-5 text-secondary" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold">{feature.title}</h3>
-                              <p className="mt-1 text-sm text-muted-foreground">
-                                {feature.description}
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </section>
-              </FadeIn>
-            )}
-
-            <section>
-              <FadeIn>
-                <h2 className="mb-6 text-2xl font-bold md:text-3xl">
-                  Your Instructor
-                </h2>
-              </FadeIn>
-              <InstructorProfile instructor={course.instructor} />
-            </section>
-
-            {course.faq.length > 0 && (
-              <section id="faq">
-                <CourseFaq faq={course.faq} />
-              </section>
-            )}
+            <CourseAccordion
+              learningOutcomes={course.learningOutcomes}
+              curriculum={course.curriculum}
+              features={course.features}
+              instructor={course.instructor}
+              faq={course.faq}
+            />
           </div>
 
           <div className="lg:col-span-1">

@@ -1,14 +1,7 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Award,
-  BadgeCheck,
-  Globe2,
-  Leaf,
-  Wrench,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FadeIn } from "@/components/ui/fade-in";
@@ -22,33 +15,56 @@ export const metadata: Metadata = {
 };
 
 const PARTNERS: Array<{
-  icon: LucideIcon;
   name: string;
   description: string;
+  href: string;
+  logoSrc: string;
+  logoAlt: string;
+  logoWidth: number;
+  logoHeight: number;
+  logoClassName?: string;
+  logoWrapperClassName?: string;
 }> = [
   {
-    icon: BadgeCheck,
     name: "Autodesk",
     description:
       "As the only Autodesk-accredited training provider in Mauritius, we are proud to collaborate with the global leader in design and engineering software. Our Autodesk Revit courses are officially recognized, ensuring trainees receive industry-standard education and a pathway to Autodesk certifications.",
+    href: "https://www.autodesk.com/",
+    logoSrc: "/partners/autodesk.svg",
+    logoAlt: "Autodesk logo",
+    logoWidth: 220,
+    logoHeight: 44,
+    logoWrapperClassName: "bg-slate-900",
   },
   {
-    icon: Wrench,
     name: "CIBSE",
     description:
       "Our affiliation with CIBSE (Chartered Institution of Building Services Engineers) underscores our commitment to delivering excellence in building services engineering. This partnership allows us to incorporate CIBSE standards into our training, preparing professionals to design and maintain efficient and sustainable building systems.",
+    href: "https://www.cibse.org/",
+    logoSrc: "/partners/cibse-hawk.png",
+    logoAlt: "CIBSE brand mark",
+    logoWidth: 160,
+    logoHeight: 94,
   },
   {
-    icon: Leaf,
     name: "USGBC",
     description:
       "We are in the process of obtaining accreditation with the USGBC (U.S. Green Building Council) to deliver LEED-related training programs. This affiliation will empower trainees to become LEED-certified professionals, equipping them with the skills to design and manage sustainable buildings that meet international green standards.",
+    href: "https://www.usgbc.org/",
+    logoSrc: "/partners/usgbc.svg",
+    logoAlt: "USGBC logo",
+    logoWidth: 88,
+    logoHeight: 88,
   },
   {
-    icon: Award,
     name: "BIM Africa",
     description:
       "As winners of the BIM Africa Award 2022, we are proud to collaborate with this prestigious organization to promote the adoption of BIM and digital construction practices in Mauritius and the wider region.",
+    href: "https://bimafrica.org/",
+    logoSrc: "/partners/bim-africa.png",
+    logoAlt: "BIM Africa logo",
+    logoWidth: 96,
+    logoHeight: 96,
   },
 ];
 
@@ -137,10 +153,25 @@ export default function AffiliationsPage() {
             <FadeIn key={partner.name} delay={index * 0.05}>
               <Card className="h-full transition-shadow hover:premium-shadow">
                 <CardContent className="p-6">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10">
-                    <partner.icon className="h-6 w-6 text-secondary" />
-                  </div>
-                  <h3 className="mt-4 font-semibold">{partner.name}</h3>
+                  <Link
+                    href={partner.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex rounded-2xl"
+                  >
+                    <div
+                      className={`flex min-h-24 w-fit min-w-40 items-center justify-center rounded-2xl border border-border bg-card px-5 py-4 ${partner.logoWrapperClassName ?? ""}`}
+                    >
+                      <Image
+                        src={partner.logoSrc}
+                        alt={partner.logoAlt}
+                        width={partner.logoWidth}
+                        height={partner.logoHeight}
+                        className={partner.logoClassName}
+                      />
+                    </div>
+                  </Link>
+                  <h3 className="mt-5 font-semibold">{partner.name}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {partner.description}
                   </p>

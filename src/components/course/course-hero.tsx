@@ -7,6 +7,7 @@ import {
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MagneticEnrollButton } from "@/components/shared/magnetic-enroll-button";
 import { FadeIn } from "@/components/ui/fade-in";
 import { EXTERNAL_REGISTRATION_URL } from "@/lib/constants";
 import { formatCurrency, formatDate, formatDuration } from "@/lib/utils";
@@ -20,6 +21,12 @@ export function CourseHero({ course }: CourseHeroProps) {
   const nextCohort = course.cohorts[0];
   const hasTax = course.taxRate > 0;
   const totalWithTax = course.price * (1 + course.taxRate);
+  const actionLabel =
+    course.status === "fully-booked"
+      ? "Register for Next Cohort"
+      : course.status === "new-cohort-coming-soon"
+        ? "Register Interest"
+        : "Enroll Now";
 
   return (
     <section className="relative overflow-hidden hero-gradient text-white">
@@ -69,11 +76,13 @@ export function CourseHero({ course }: CourseHeroProps) {
 
         <FadeIn delay={0.4}>
           <div className="mt-10 flex flex-wrap items-center gap-4">
-            <Button variant="premium" size="lg" asChild>
-              <Link href={EXTERNAL_REGISTRATION_URL} target="_blank" rel="noopener noreferrer">
-                Enroll Now
-              </Link>
-            </Button>
+            <MagneticEnrollButton
+              href={EXTERNAL_REGISTRATION_URL}
+              external
+              size="lg"
+            >
+              {actionLabel}
+            </MagneticEnrollButton>
             <Button
               variant="outline"
               size="lg"

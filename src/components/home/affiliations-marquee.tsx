@@ -1,17 +1,46 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Award, BadgeCheck, Leaf, Wrench, type LucideIcon } from "lucide-react";
 
 // Only confirmed partnerships appear here — the "future collaborations" on
 // /affiliations (RICS, ASHRAE, EDGE, ISHRAE) aren't real affiliations yet, so
 // they're intentionally left out of this homepage band.
-const PARTNERS: Array<{ icon: LucideIcon; name: string }> = [
-  { icon: BadgeCheck, name: "Autodesk" },
-  { icon: Wrench, name: "CIBSE" },
-  { icon: Leaf, name: "USGBC" },
-  { icon: Award, name: "BIM Africa" },
+const PARTNERS: Array<{
+  name: string;
+  logoSrc?: string;
+  logoAlt?: string;
+  logoWidth?: number;
+  logoHeight?: number;
+  logoClassName?: string;
+  logoWrapperClassName?: string;
+}> = [
+  {
+    name: "Autodesk",
+    logoSrc: "/partners/autodesk.svg",
+    logoAlt: "Autodesk logo",
+    logoWidth: 156,
+    logoHeight: 32,
+    logoWrapperClassName: "bg-slate-900",
+  },
+  {
+    name: "CIBSE",
+  },
+  {
+    name: "USGBC",
+    logoSrc: "/partners/usgbc.svg",
+    logoAlt: "USGBC logo",
+    logoWidth: 38,
+    logoHeight: 38,
+  },
+  {
+    name: "BIM Africa",
+    logoSrc: "/partners/bim-africa.png",
+    logoAlt: "BIM Africa logo",
+    logoWidth: 44,
+    logoHeight: 44,
+  },
 ];
 
 // Duplicated once so the strip can loop seamlessly: animating from 0% to -50%
@@ -39,9 +68,23 @@ export function AffiliationsMarquee() {
                 key={`${partner.name}-${index}`}
                 className="flex shrink-0 items-center gap-3 rounded-2xl border border-border bg-background px-6 py-4 premium-shadow"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/10">
-                  <partner.icon className="h-5 w-5 text-secondary" />
-                </div>
+                {partner.logoSrc ? (
+                  <div
+                    className={`flex h-11 min-w-11 items-center justify-center rounded-xl bg-secondary/10 px-2 ${partner.logoWrapperClassName ?? ""}`}
+                  >
+                    <Image
+                      src={partner.logoSrc}
+                      alt={partner.logoAlt ?? `${partner.name} logo`}
+                      width={partner.logoWidth ?? 40}
+                      height={partner.logoHeight ?? 40}
+                      className={partner.logoClassName}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-11 items-center justify-center rounded-xl bg-secondary/10 px-3 text-sm font-semibold text-secondary">
+                    {partner.name}
+                  </div>
+                )}
                 <span className="whitespace-nowrap font-semibold text-foreground">
                   {partner.name}
                 </span>

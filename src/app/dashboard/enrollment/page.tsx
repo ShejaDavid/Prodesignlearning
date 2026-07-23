@@ -1,5 +1,6 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getPrimaryEnrollment } from "@/lib/enrollments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
@@ -9,11 +10,7 @@ import Link from "next/link";
 
 async function getEnrollment(userId: string) {
   try {
-    return await db.enrollment.findFirst({
-      where: { userId },
-      include: { course: true, cohort: true, payment: true, certificate: true },
-      orderBy: { createdAt: "desc" },
-    });
+    return await getPrimaryEnrollment(userId);
   } catch {
     return {
       id: MOCK_ENROLLMENT.id,
@@ -33,7 +30,8 @@ async function getEnrollment(userId: string) {
 
 export default async function EnrollmentPage() {
   const session = await auth();
-  const enrollment = await getEnrollment(session!.user!.id);
+  if (!session?.user) redirect("/login?callbackUrl=/dashboard/enrollment");
+  const enrollment = await getEnrollment(session.user.id);
 
   if (!enrollment) {
     return (
@@ -65,7 +63,12 @@ export default async function EnrollmentPage() {
           <div className="grid sm:grid-cols-2 gap-6 text-sm">
             <div>
               <p className="text-muted-foreground">Status</p>
-              <p className="font-medium capitalize">{enrollment.status.replace(/_/g, " ").toLowerCase()}</p>
+              <p className="font-medium">
+                {enrollment.status
+                  .replace(/_/g, " ")
+                  .toLowerCase()
+                  .replace(/^\w/, (char) => char.toUpperCase())}
+              </p>
             </div>
             <div>
               <p className="text-muted-foreground">Cohort</p>

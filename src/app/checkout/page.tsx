@@ -1,8 +1,7 @@
-import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 
 interface CheckoutPageProps {
@@ -50,16 +49,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
     <div className="min-h-screen bg-muted/30">
       <header className="border-b border-border bg-background">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <Link href="/" className="inline-flex items-center">
-            <Image
-              src="/logo.png"
-              alt="Prodesign Learning Centre"
-              width={151}
-              height={76}
-              className="h-12 w-auto"
-              priority
-            />
-          </Link>
+          <BrandLogo variant="checkout" priority />
           <span className="text-sm text-muted-foreground">Secure Checkout</span>
         </div>
       </header>

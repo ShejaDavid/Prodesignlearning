@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, Lock, PlayCircle, Clock } from "lucide-react";
+import { redirect } from "next/navigation";
+import { ArrowLeft, Lock, PlayCircle, Clock, FileText, Download } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { getEnrolledCourseForUser } from "@/lib/enrollments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +25,8 @@ export default async function CourseLearnPage({
 }) {
   const { slug } = await params;
   const session = await auth();
-  const userId = session!.user!.id;
+  if (!session?.user) redirect(`/login?callbackUrl=/dashboard/courses/${slug}`);
+  const userId = session.user.id;
 
   // The single authorization gate: returns the course + modules + videos only
   // when this user has a valid (ENROLLED, not expired) enrolment in it.
@@ -86,6 +88,34 @@ export default async function CourseLearnPage({
           )}
         </div>
       </div>
+
+      {course.resources.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Course Materials</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {course.resources.map((resource) => (
+                <li key={resource.id}>
+                  <a
+                    href={resource.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2.5 text-sm transition-colors hover:bg-muted"
+                  >
+                    <span className="flex items-center gap-2 font-medium text-foreground">
+                      <FileText className="h-4 w-4 text-secondary" />
+                      {resource.title}
+                    </span>
+                    <Download className="h-4 w-4 text-muted-foreground" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       {course.modules.length === 0 ? (
         <Card>

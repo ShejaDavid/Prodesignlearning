@@ -11,6 +11,7 @@ import { NewsletterSection } from "@/components/home/newsletter-section";
 import { CtaSection } from "@/components/home/cta-section";
 import Script from "next/script";
 import { SITE_CONFIG } from "@/lib/constants";
+import { getFeaturedOpenCohort } from "@/lib/public-courses";
 
 const organizationJsonLd = {
   "@context": "https://schema.org",
@@ -35,7 +36,9 @@ const organizationJsonLd = {
   ],
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const featured = await getFeaturedOpenCohort();
+
   return (
     <>
       <Script
@@ -46,7 +49,14 @@ export default function HomePage() {
       <HeroSection />
       <StatsSection />
       <AffiliationsMarquee />
-      <CountdownSection />
+      {featured && (
+        <CountdownSection
+          courseTitle={featured.courseTitle}
+          cohortStartDate={featured.startDate}
+          seatsTotal={featured.seatsTotal}
+          seatsAvailable={featured.seatsAvailable}
+        />
+      )}
       <CoursePreview />
       <AboutCompanySection />
       <TestimonialsCarousel />

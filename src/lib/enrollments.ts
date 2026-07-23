@@ -1,17 +1,52 @@
 import { db } from "@/lib/db";
+import { EnrollmentStatus } from "@prisma/client";
 
 /**
  * A "valid" enrolment is one that grants access to protected course content:
- *   - status is ENROLLED (activated manually by an admin or by the payment webhook), and
+ *   - status is ENROLLED or COMPLETED, and
  *   - access has not expired (accessExpiresAt is null = never expires, or in the future).
  *
- * PENDING / PAYMENT_PENDING / COMPLETED / CANCELLED enrolments do NOT grant access.
+ * PENDING / PAYMENT_PENDING / CANCELLED enrolments do NOT grant access.
  */
 export function validEnrollmentFilter(now: Date = new Date()) {
   return {
-    status: "ENROLLED" as const,
+    status: { in: [EnrollmentStatus.ENROLLED, EnrollmentStatus.COMPLETED] },
     OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: now } }],
   };
+}
+
+function enrollmentPriority(status: string) {
+  switch (status) {
+    case "ENROLLED":
+      return 0;
+    case "COMPLETED":
+      return 1;
+    case "PAYMENT_PENDING":
+      return 2;
+    case "PENDING":
+      return 3;
+    case "CANCELLED":
+      return 4;
+    default:
+      return 5;
+  }
+}
+
+export async function getPrimaryEnrollment(userId: string) {
+  const enrollments = await db.enrollment.findMany({
+    where: { userId },
+    include: { course: true, cohort: true, payment: true, certificate: true },
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+  });
+
+  return (
+    enrollments.sort((a, b) => {
+      const byPriority = enrollmentPriority(a.status) - enrollmentPriority(b.status);
+      if (byPriority !== 0) return byPriority;
+
+      return b.updatedAt.getTime() - a.updatedAt.getTime();
+    })[0] ?? null
+  );
 }
 
 /**
@@ -54,6 +89,7 @@ export function getEnrolledCourseForUser(userId: string, slug: string) {
               videos: { orderBy: { sortOrder: "asc" } },
             },
           },
+          resources: { orderBy: { sortOrder: "asc" } },
         },
       },
     },

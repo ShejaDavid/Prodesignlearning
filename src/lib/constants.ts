@@ -24,6 +24,11 @@ export const SITE_CONFIG = {
 export const EXTERNAL_REGISTRATION_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSfgazr2IausaaK9Rvx-99EkoEVbONUmlyDt2I8bJaTCEmeXoA/viewform?usp=sharing&ouid=114074525839102479978";
 
+// Shown under the course fee. Our courses are MQA-approved, which makes them
+// eligible for HRDC training-levy refunds — surfaced right at the price to
+// offset sticker shock. Edit here to change the wording site-wide.
+export const PRICE_VALUE_NOTE = "MQA Approved · HRDC Refundable up to 75%";
+
 export const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/courses", label: "Courses" },

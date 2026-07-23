@@ -48,6 +48,7 @@ export async function POST(request: Request) {
         instructorName: data.instructorName,
         instructorBio: data.instructorBio,
         isActive: data.isActive,
+        publicStatus: data.publicStatus,
       },
     });
 

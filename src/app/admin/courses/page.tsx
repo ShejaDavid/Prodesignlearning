@@ -11,6 +11,20 @@ import { syncMissingLegacyCourses } from "@/lib/public-courses";
 
 export const dynamic = "force-dynamic";
 
+const PUBLIC_STATUS_LABELS = {
+  ACTIVE: "Active",
+  FULLY_BOOKED: "Fully booked",
+  NEW_COHORT_COMING_SOON: "New cohort coming soon",
+  COMING_SOON: "Coming soon",
+} as const;
+
+const PUBLIC_STATUS_CLASS_NAMES = {
+  ACTIVE: "bg-success/10 text-success",
+  FULLY_BOOKED: "bg-amber-50 text-amber-700",
+  NEW_COHORT_COMING_SOON: "bg-blue-50 text-blue-700",
+  COMING_SOON: "bg-muted text-muted-foreground",
+} as const;
+
 interface AdminCohort extends ExistingCohort {
   enrollmentCount: number;
 }
@@ -47,6 +61,7 @@ async function getCourses(): Promise<{ courses: AdminCourse[]; fromDb: boolean }
         instructorName: c.instructorName,
         instructorBio: c.instructorBio,
         isActive: c.isActive,
+        publicStatus: c.publicStatus,
         enrollmentCount: c._count.enrollments,
         cohorts: c.cohorts.map((cohort) => ({
           id: cohort.id,
@@ -108,12 +123,15 @@ export default async function AdminCoursesPage() {
               </div>
               <div className="flex items-center gap-3">
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  course.isActive
-                    ? "bg-success/10 text-success"
-                    : "bg-muted text-muted-foreground"
+                  PUBLIC_STATUS_CLASS_NAMES[course.publicStatus]
                 }`}>
-                  {course.isActive ? "Active" : "Inactive"}
+                  {PUBLIC_STATUS_LABELS[course.publicStatus]}
                 </span>
+                {!course.isActive && (
+                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                    Hidden
+                  </span>
+                )}
                 {fromDb && <CourseForm mode="edit" course={course} />}
                 {fromDb && (
                   <DeleteCourseButton

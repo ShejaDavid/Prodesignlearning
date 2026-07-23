@@ -8,6 +8,7 @@ import {
   UserPlus,
   BookOpen,
   PlayCircle,
+  FileText,
   CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ const ADMIN_NAV = [
   { href: "/admin/students", label: "Students", icon: Users },
   { href: "/admin/courses", label: "Courses", icon: BookOpen },
   { href: "/admin/videos", label: "Videos", icon: PlayCircle },
+  { href: "/admin/materials", label: "Materials", icon: FileText },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
 ];
 

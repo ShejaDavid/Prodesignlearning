@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { BookOpen, ArrowRight, Clock } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { getMyCourses } from "@/lib/enrollments";
@@ -14,7 +15,8 @@ export const dynamic = "force-dynamic";
 
 export default async function MyCoursesPage() {
   const session = await auth();
-  const enrollments = await getMyCourses(session!.user!.id);
+  if (!session?.user) redirect("/login?callbackUrl=/dashboard/courses");
+  const enrollments = await getMyCourses(session.user.id);
 
   return (
     <div className="space-y-6">

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +19,8 @@ async function getInvoices(userId: string) {
 
 export default async function InvoicesPage() {
   const session = await auth();
-  const invoices = await getInvoices(session!.user!.id);
+  if (!session?.user) redirect("/login?callbackUrl=/dashboard/invoices");
+  const invoices = await getInvoices(session.user.id);
 
   return (
     <div className="space-y-6">

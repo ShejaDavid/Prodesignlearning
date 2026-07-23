@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  ArrowRight,
   BookOpen,
   Calendar,
   Clock,
@@ -11,6 +10,7 @@ import { getCourseBySlug } from "@/lib/course-data";
 import { EXTERNAL_REGISTRATION_URL } from "@/lib/constants";
 import { formatCurrency, formatDuration } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { MagneticEnrollButton } from "@/components/shared/magnetic-enroll-button";
 import {
   Card,
   CardContent,
@@ -106,16 +106,22 @@ export function CoursePreview() {
                         {feature.title}
                       </li>
                     ))}
+                    <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                      Instructor support via WhatsApp
+                    </li>
                   </ul>
                 </CardContent>
 
                 <CardFooter className="flex flex-col gap-3 sm:flex-row">
-                  <Button variant="premium" className="w-full sm:w-auto" asChild>
-                    <Link href={EXTERNAL_REGISTRATION_URL} target="_blank" rel="noopener noreferrer">
-                      Enroll Now
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
+                  <MagneticEnrollButton
+                    href={EXTERNAL_REGISTRATION_URL}
+                    external
+                    icon="arrow-right"
+                    className="w-full sm:w-auto"
+                  >
+                    Enroll Now
+                  </MagneticEnrollButton>
                   <Button variant="outline" className="w-full sm:w-auto" asChild>
                     <Link href={`/courses/${course.slug}`}>
                       View Full Syllabus

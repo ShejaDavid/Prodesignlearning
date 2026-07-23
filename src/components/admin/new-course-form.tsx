@@ -14,6 +14,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Plus, Pencil } from "lucide-react";
 
+const COURSE_STATUS_OPTIONS = [
+  { value: "ACTIVE", label: "Active" },
+  { value: "FULLY_BOOKED", label: "Fully booked" },
+  { value: "NEW_COHORT_COMING_SOON", label: "New cohort coming soon" },
+  { value: "COMING_SOON", label: "Coming soon" },
+] as const;
+
 function slugify(value: string) {
   return value
     .toLowerCase()
@@ -55,6 +62,7 @@ export function CourseForm({ mode = "create", course }: CourseFormProps) {
       instructorName: "",
       instructorBio: "",
       isActive: true,
+      publicStatus: "ACTIVE",
     },
   });
   const {
@@ -241,10 +249,32 @@ export function CourseForm({ mode = "create", course }: CourseFormProps) {
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" {...register("isActive")} className="h-4 w-4" />
-            Active (visible to students)
-          </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor={`publicStatus-${mode}-${course?.id ?? "new"}`}>
+                Public status
+              </Label>
+              <select
+                id={`publicStatus-${mode}-${course?.id ?? "new"}`}
+                {...register("publicStatus")}
+                className="h-10 w-full rounded-2xl border border-input bg-background px-3 text-sm"
+              >
+                {COURSE_STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {errors.publicStatus && (
+                <p className="text-sm text-red-500">{errors.publicStatus.message}</p>
+              )}
+            </div>
+
+            <label className="flex items-center gap-2 self-end pb-2 text-sm">
+              <input type="checkbox" {...register("isActive")} className="h-4 w-4" />
+              Visible to students
+            </label>
+          </div>
 
           {error && (
             <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">

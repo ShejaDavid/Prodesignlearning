@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Mail } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import { FOOTER_LINKS, SITE_CONFIG } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BackToMainSite } from "@/components/shared/back-to-main-site";
@@ -19,12 +19,34 @@ const footerColumns = [
 export function Footer() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleNewsletterSubmit = (event: React.FormEvent) => {
+  const handleNewsletterSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (email.trim()) {
+    const nextEmail = email.trim();
+    if (!nextEmail) return;
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: nextEmail }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        setError(json.error || "Could not subscribe. Please try again.");
+        return;
+      }
+
       setSubmitted(true);
       setEmail("");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -33,15 +55,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-5">
           <div className="lg:col-span-2">
-            <Link href="/" className="inline-flex items-center rounded bg-white px-3 py-2">
-              <Image
-                src="/logo.png"
-                alt={SITE_CONFIG.name}
-                width={151}
-                height={76}
-                className="h-14 w-auto"
-              />
-            </Link>
+            <BrandLogo variant="footer" />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-primary-foreground/70">
               {SITE_CONFIG.description}
             </p>
@@ -61,14 +75,20 @@ export function Footer() {
                   type="submit"
                   variant="secondary"
                   size="icon"
+                  disabled={isSubmitting}
                   aria-label="Subscribe to newsletter"
                 >
-                  <Mail className="h-4 w-4" />
+                  {isSubmitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Mail className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
               {submitted && (
                 <p className="mt-2 text-xs text-accent">Thanks for subscribing!</p>
               )}
+              {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
             </form>
 
             <div className="mt-6">

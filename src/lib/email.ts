@@ -7,6 +7,11 @@ const resend = process.env.RESEND_API_KEY
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "admin@prodesign.mu";
 
+export const FORM_NOTIFICATION_RECIPIENTS = [
+  "david.sheja@prodesign.mu",
+  "shejadavid11@gmail.com",
+];
+
 interface SendEmailParams {
   to: string;
   subject: string;
@@ -116,6 +121,31 @@ export function setPasswordEmail(
   };
 }
 
+export function verifyEmailEmail(name: string, link: string) {
+  return {
+    subject: "Confirm Your Email — Prodesign Learning Centre",
+    html: `
+      <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #0F172A;">Confirm your email</h1>
+        <p>Hi ${name},</p>
+        <p>Thanks for creating a Prodesign Learning Centre account. You can already sign in and check your registration status — this is just to confirm this email address belongs to you:</p>
+        <a href="${link}"
+           style="display: inline-block; background: #A54399; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin-top: 16px;">
+          Confirm Email Address
+        </a>
+        <p style="color: #64748B; margin-top: 24px; font-size: 14px;">
+          This link expires in 7 days and can be used once. If you didn't create
+          this account, you can ignore this email.
+        </p>
+        <p style="color: #64748B; margin-top: 32px; font-size: 14px;">
+          Prodesign Learning Centre<br/>
+          training@prodesign.mu
+        </p>
+      </div>
+    `,
+  };
+}
+
 export function resetPasswordEmail(name: string, link: string) {
   return {
     subject: "Reset Your Password — Prodesign Learning Centre",
@@ -183,6 +213,59 @@ export function enrollmentConfirmationEmail(
           <p><strong>Schedule:</strong> ${schedule}</p>
         </div>
         <p>We look forward to seeing you in class!</p>
+      </div>
+    `,
+  };
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+export function contactNotificationEmail(data: {
+  name: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+}) {
+  const safeMessage = escapeHtml(data.message).replace(/\n/g, "<br/>");
+
+  return {
+    subject: `New website enquiry — ${data.subject}`,
+    html: `
+      <div style="font-family: Inter, sans-serif; max-width: 640px; margin: 0 auto;">
+        <h1 style="color: #0F172A;">New website enquiry</h1>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; margin: 16px 0;">
+          <p><strong>Name:</strong> ${escapeHtml(data.name)}</p>
+          <p><strong>Email:</strong> <a href="mailto:${escapeHtml(data.email)}">${escapeHtml(data.email)}</a></p>
+          <p><strong>Phone:</strong> ${escapeHtml(data.phone || "Not provided")}</p>
+          <p><strong>Subject:</strong> ${escapeHtml(data.subject)}</p>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px;">
+          <p style="margin-top: 0;"><strong>Message</strong></p>
+          <p style="line-height: 1.6;">${safeMessage}</p>
+        </div>
+      </div>
+    `,
+  };
+}
+
+export function newsletterNotificationEmail(email: string) {
+  return {
+    subject: "New newsletter signup — Prodesign Learning Centre",
+    html: `
+      <div style="font-family: Inter, sans-serif; max-width: 640px; margin: 0 auto;">
+        <h1 style="color: #0F172A;">New newsletter signup</h1>
+        <p>A visitor subscribed to course updates from the website.</p>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; margin: 16px 0;">
+          <p><strong>Email:</strong> <a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></p>
+        </div>
       </div>
     `,
   };

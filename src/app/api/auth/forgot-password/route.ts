@@ -4,6 +4,7 @@ import { forgotPasswordSchema } from "@/lib/validations";
 import { createPasswordSetToken } from "@/lib/tokens";
 import { sendEmail, resetPasswordEmail } from "@/lib/email";
 import { SITE_CONFIG } from "@/lib/constants";
+import { emailEquals, normalizeEmail } from "@/lib/email-normalize";
 
 export async function POST(request: Request) {
   try {
@@ -16,8 +17,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email } = parsed.data;
-    const user = await db.user.findUnique({ where: { email } });
+    const email = normalizeEmail(parsed.data.email);
+    const user = await db.user.findFirst({ where: { email: emailEquals(email) } });
 
     // Always respond the same way whether or not the account exists, so this
     // endpoint can't be used to discover which emails are registered.

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { adminStudentSchema } from "@/lib/validations";
 import { z } from "zod";
+import { emailEquals, normalizeEmail } from "@/lib/email-normalize";
 
 const updateSchema = z.object({
   userId: z.string().min(1),
@@ -75,9 +76,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const { firstName, lastName, email, phone } = parsed.data;
+    const { firstName, lastName, phone } = parsed.data;
+    const email = normalizeEmail(parsed.data.email);
 
-    const existing = await db.user.findUnique({ where: { email } });
+    const existing = await db.user.findFirst({ where: { email: emailEquals(email) } });
     if (existing) {
       return NextResponse.json(
         { error: "A user with this email already exists." },

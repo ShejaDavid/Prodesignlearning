@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import Script from "next/script";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { WhatsAppButton } from "@/components/layout/whatsapp-button";
@@ -57,23 +56,6 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
-      <head>
-        {/*
-          Applies the saved theme before first paint, avoiding a flash of the
-          wrong theme. Rendered directly by this Server Component (not a
-          Client Component), so it executes once during HTML parsing and is
-          never re-rendered by React — no type-toggle trick needed here.
-          suppressHydrationWarning on <html> tells React to accept the class
-          this script sets rather than flag it as a mismatch.
-        */}
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{if(localStorage.getItem("theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}})()`,
-          }}
-        />
-      </head>
       <body className="min-h-screen bg-background font-sans antialiased">
         <ThemeProvider>
           <SessionProvider session={session}>

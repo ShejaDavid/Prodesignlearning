@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Send } from "lucide-react";
+import { Loader2, Mail, Send } from "lucide-react";
 import { SITE_CONFIG } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,34 @@ import { FadeIn } from "@/components/shared/fade-in";
 export function NewsletterSection() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (email.trim()) {
+    const nextEmail = email.trim();
+    if (!nextEmail) return;
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: nextEmail }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        setError(json.error || "Could not subscribe. Please try again.");
+        return;
+      }
+
       setSubmitted(true);
       setEmail("");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -53,12 +75,28 @@ export function NewsletterSection() {
                 <Button
                   type="submit"
                   variant="secondary"
+                  disabled={isSubmitting}
                   className="shrink-0 bg-white text-primary hover:bg-white/90"
                 >
-                  Subscribe
-                  <Send className="h-4 w-4" />
+                  {isSubmitting ? (
+                    <>
+                      Sending
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </>
+                  ) : (
+                    <>
+                      Subscribe
+                      <Send className="h-4 w-4" />
+                    </>
+                  )}
                 </Button>
               </form>
+            )}
+
+            {error && (
+              <p className="mt-3 rounded-2xl bg-white/10 px-4 py-3 text-sm text-white backdrop-blur-sm">
+                {error}
+              </p>
             )}
 
             <p className="mt-4 text-xs text-white/60">

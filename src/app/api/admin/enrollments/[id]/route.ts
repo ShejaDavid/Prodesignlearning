@@ -35,6 +35,7 @@ export async function PATCH(
     }
 
     const { status } = parsed.data;
+
     await db.$transaction(async (tx) => {
       await tx.enrollment.update({
         where: { id },

@@ -12,6 +12,7 @@ import {
   User,
   LogOut,
   BookOpen,
+  Award,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/enrollment", label: "Enrollment", icon: GraduationCap },
   { href: "/dashboard/payments", label: "Payments", icon: CreditCard },
   { href: "/dashboard/invoices", label: "Invoices", icon: FileText },
+  { href: "/dashboard/certificates", label: "Certificates", icon: Award },
   { href: "/dashboard/profile", label: "Profile", icon: User },
 ];
 

@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useState,
   type ReactNode,
 } from "react";
@@ -30,21 +31,16 @@ function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle("dark", theme === "dark");
 }
 
-// Renders no <script> of its own — the FOUC-prevention script lives in the
-// root layout (a Server Component) instead. A Client Component rendering a
-// raw <script> tag re-executes its render on every client render, which is
-// what produces the "script tag" warning and the hydration mismatch that
-// comes with it. This provider only reads/writes the DOM imperatively.
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Lazy initializer reads from the same source (localStorage) as the inline
-  // script in layout.tsx, so this first client render matches what the
-  // script already applied to the DOM before hydration.
   const [theme, setThemeState] = useState<Theme>(readStoredTheme);
+
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
     localStorage.setItem(STORAGE_KEY, next);
-    applyTheme(next);
   }, []);
 
   return (

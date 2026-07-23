@@ -101,6 +101,9 @@ export const adminCourseSchema = z.object({
   instructorName: z.string().min(2, "Instructor name is required"),
   instructorBio: z.string().min(2, "Instructor bio is required"),
   isActive: z.boolean().default(true),
+  publicStatus: z
+    .enum(["ACTIVE", "FULLY_BOOKED", "NEW_COHORT_COMING_SOON", "COMING_SOON"])
+    .default("ACTIVE"),
 });
 
 export type AdminCourseFormData = z.infer<typeof adminCourseSchema>;
@@ -153,6 +156,15 @@ export const adminVideoSchema = z
     message: "A video URL is required",
     path: ["url"],
   });
+
+// Admin: add a downloadable resource (PDF, project files, etc.) to a course.
+export const adminResourceSchema = z.object({
+  courseId: z.string().min(1, "Course is required"),
+  title: z.string().min(2, "Title is required"),
+  fileUrl: z.string().url("Enter a valid URL"),
+});
+
+export type AdminResourceFormData = z.infer<typeof adminResourceSchema>;
 
 export type AdminVideoFormData = z.infer<typeof adminVideoSchema>;
 

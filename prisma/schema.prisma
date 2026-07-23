@@ -78,6 +78,13 @@ enum VideoProvider {
   MUX
 }
 
+enum CoursePublicStatus {
+  ACTIVE
+  FULLY_BOOKED
+  NEW_COHORT_COMING_SOON
+  COMING_SOON
+}
+
 model User {
   id           String    @id @default(cuid())
   email        String    @unique
@@ -89,18 +96,38 @@ model User {
   lastName     String    @map("last_name")
   phone        String?
   dateOfBirth  DateTime? @map("date_of_birth")
+  // Set once the address-verification link is clicked. Never gates login —
+  // self-signup accounts can sign in immediately regardless of this value.
+  emailVerified DateTime? @map("email_verified")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  profile           StudentProfile?
-  enrollments       Enrollment[]
-  payments          Payment[]
-  invoices          Invoice[]
-  certificates      Certificate[]
-  emailLogs         EmailLog[]
-  passwordSetTokens PasswordSetToken[]
+  profile                StudentProfile?
+  enrollments            Enrollment[]
+  payments               Payment[]
+  invoices               Invoice[]
+  certificates           Certificate[]
+  emailLogs              EmailLog[]
+  passwordSetTokens      PasswordSetToken[]
+  emailVerificationTokens EmailVerificationToken[]
 
   @@map("users")
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  // SHA-256 hash of the token, same non-recoverable-at-rest approach as
+  // PasswordSetToken below.
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("email_verification_tokens")
 }
 
 model PasswordSetToken {
@@ -151,6 +178,7 @@ model Course {
   learningOutcomes Json     @default("[]") @map("learning_outcomes")
   features         Json     @default("[]")
   isActive         Boolean  @default(true) @map("is_active")
+  publicStatus     CoursePublicStatus @default(ACTIVE) @map("public_status")
   isFeatured       Boolean  @default(false) @map("is_featured")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
@@ -159,8 +187,26 @@ model Course {
   cohorts      Cohort[]
   enrollments  Enrollment[]
   certificates Certificate[]
+  resources    Resource[]
 
   @@map("courses")
+}
+
+model Resource {
+  id        String   @id @default(cuid())
+  courseId  String   @map("course_id")
+  title     String
+  // A link to the file (e.g. a shared Google Drive/Dropbox link, or a path
+  // under /public) — same "admin provides a URL" approach already used for
+  // non-Mux videos, rather than a separate file-upload/storage system.
+  fileUrl   String   @map("file_url")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@map("resources")
 }
 
 model CourseModule {

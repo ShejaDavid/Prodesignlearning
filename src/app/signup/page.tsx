@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { SignupForm } from "@/components/forms/signup-form";
+import Link from "next/link";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import {
   Card,
   CardContent,
@@ -21,16 +21,9 @@ export default function SignupPage() {
       <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <Card className="order-2 lg:order-1">
           <CardHeader className="text-center lg:text-left">
-            <Link href="/" className="mb-2 inline-flex justify-center lg:justify-start">
-              <Image
-                src="/logo.png"
-                alt="Prodesign Learning Centre"
-                width={151}
-                height={76}
-                className="h-16 w-auto"
-                priority
-              />
-            </Link>
+            <div className="mb-2 flex justify-center lg:justify-start">
+              <BrandLogo variant="auth" priority />
+            </div>
             <CardTitle>Create Account</CardTitle>
             <CardDescription>
               Sign up to track your registration, payments, and course access.

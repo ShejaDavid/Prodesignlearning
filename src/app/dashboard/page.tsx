@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getPrimaryEnrollment } from "@/lib/enrollments";
 import { StatusCard } from "@/components/dashboard/status-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,11 +13,7 @@ import { GraduationCap, CreditCard, FileText, Clock, ArrowRight } from "lucide-r
 async function getDashboardData(userId: string) {
   try {
     const [enrollment, payments, invoices] = await Promise.all([
-      db.enrollment.findFirst({
-        where: { userId },
-        include: { course: true, cohort: true },
-        orderBy: { createdAt: "desc" },
-      }),
+      getPrimaryEnrollment(userId),
       db.payment.findMany({
         where: { userId },
         orderBy: { createdAt: "desc" },
@@ -55,12 +53,14 @@ async function getDashboardData(userId: string) {
 
 export default async function DashboardPage() {
   const session = await auth();
-  const userId = session!.user!.id;
+  if (!session?.user) redirect("/login?callbackUrl=/dashboard");
+  const userId = session.user.id;
   const { enrollment, payments, invoices } = await getDashboardData(userId);
 
   const pendingPayment = payments.find((p) => p.status === "PENDING" || p.status === "PROCESSING");
   const hasEnrollment = Boolean(enrollment);
-  const hasActiveEnrollment = enrollment?.status === "ENROLLED";
+  const hasActiveEnrollment =
+    enrollment?.status === "ENROLLED" || enrollment?.status === "COMPLETED";
   const statusLabel = hasEnrollment
     ? enrollment!.status.replace(/_/g, " ")
     : "Pending review";
@@ -71,7 +71,7 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-bold">Welcome back, {session?.user?.name?.split(" ")[0]}</h1>
         <p className="text-muted-foreground mt-1">
           {hasEnrollment
-            ? "Here&apos;s an overview of your training journey"
+            ? "Here's an overview of your training journey"
             : "Your account is ready. Course access appears once your enrolment is confirmed."}
         </p>
       </div>

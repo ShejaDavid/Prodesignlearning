@@ -21,6 +21,7 @@ type PublicCourseSummary = Pick<
   "slug" | "title" | "description" | "price" | "taxRate" | "durationHours" | "durationDays"
 > & {
   isActive: boolean;
+  status: Course["status"];
   nextCohort: Course["cohorts"][number] | null;
 };
 
@@ -106,8 +107,27 @@ function buildSeedCourse(slug: string): Prisma.CourseCreateManyInput {
     isActive:
       roadmapCourse?.status === "registration-open" ||
       roadmapCourse?.status === "full-booked",
+    publicStatus:
+      roadmapCourse?.status === "full-booked"
+        ? "FULLY_BOOKED"
+        : roadmapCourse?.status === "registration-open"
+          ? "ACTIVE"
+          : "COMING_SOON",
     isFeatured: slug === "revit-foundation",
   };
+}
+
+function toPublicCourseStatus(
+  status: "ACTIVE" | "FULLY_BOOKED" | "NEW_COHORT_COMING_SOON" | "COMING_SOON"
+): Course["status"] {
+  if (status === "FULLY_BOOKED") return "fully-booked";
+  if (status === "NEW_COHORT_COMING_SOON") return "new-cohort-coming-soon";
+  if (status === "COMING_SOON") return "coming-soon";
+  return "active";
+}
+
+function isPubliclyOpen(status: Course["status"]) {
+  return status !== "coming-soon";
 }
 
 export async function syncMissingLegacyCourses() {
@@ -171,9 +191,7 @@ function mergeCourseData(
     durationHours: dbCourse?.durationHours ?? legacyCourse?.durationHours ?? 0,
     durationDays: dbCourse?.durationDays ?? legacyCourse?.durationDays ?? 1,
     status: dbCourse
-      ? dbCourse.isActive
-        ? "active"
-        : "coming-soon"
+      ? toPublicCourseStatus(dbCourse.publicStatus)
       : (legacyCourse?.status ?? "coming-soon"),
     instructor: dbCourse
       ? {
@@ -231,7 +249,8 @@ export async function getPublicCourses(): Promise<PublicCourseSummary[]> {
         taxRate: Number(course.taxRate),
         durationHours: course.durationHours,
         durationDays: course.durationDays,
-        isActive: course.isActive,
+        status: toPublicCourseStatus(course.publicStatus),
+        isActive: course.isActive && isPubliclyOpen(toPublicCourseStatus(course.publicStatus)),
         nextCohort: dbCohorts[0] ?? legacyCourse?.cohorts[0] ?? null,
       };
     })
@@ -259,4 +278,31 @@ export async function getPublicCourseBySlug(slug: string): Promise<Course | null
   ]);
 
   return mergeCourseData(dbCourse, legacyCourse);
+}
+
+/**
+ * The course to feature in the homepage "Next Cohort" countdown: the soonest
+ * upcoming cohort that is actually open for registration (its course is marked
+ * ACTIVE and the cohort still has seats). Returns null when nothing is open,
+ * so the homepage can hide the countdown rather than show a full/stale course.
+ */
+export async function getFeaturedOpenCohort() {
+  const cohort = await db.cohort.findFirst({
+    where: {
+      seatsAvailable: { gt: 0 },
+      course: { publicStatus: "ACTIVE" },
+    },
+    orderBy: { startDate: "asc" },
+    include: { course: { select: { title: true, slug: true } } },
+  });
+
+  if (!cohort) return null;
+
+  return {
+    courseTitle: cohort.course.title,
+    courseSlug: cohort.course.slug,
+    startDate: cohort.startDate.toISOString(),
+    seatsTotal: cohort.seatsTotal,
+    seatsAvailable: cohort.seatsAvailable,
+  };
 }

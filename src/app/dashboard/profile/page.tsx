@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +17,8 @@ async function getProfile(userId: string) {
 
 export default async function ProfilePage() {
   const session = await auth();
-  const user = await getProfile(session!.user!.id);
+  if (!session?.user) redirect("/login?callbackUrl=/dashboard/profile");
+  const user = await getProfile(session.user.id);
 
   const displayUser = user ?? {
     firstName: session?.user?.name?.split(" ")[0] ?? "Student",

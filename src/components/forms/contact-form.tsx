@@ -13,6 +13,7 @@ import { contactSchema, type ContactFormData } from "@/lib/validations";
 
 export function ContactForm() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
@@ -31,8 +32,20 @@ export function ContactForm() {
   });
 
   async function onSubmit(data: ContactFormData) {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    console.log("Contact form submitted:", data);
+    setSubmitError(null);
+
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+
+    if (!res.ok) {
+      setSubmitError(json.error || "Failed to send message. Please try again.");
+      return;
+    }
+
     setSubmitted(true);
     reset();
   }
@@ -126,6 +139,12 @@ export function ContactForm() {
             <p className="text-sm text-red-500">{errors.message.message}</p>
           )}
         </div>
+
+        {submitError && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+            {submitError}
+          </div>
+        )}
 
         <Button
           type="submit"

@@ -8,6 +8,7 @@ import { SectionHeading } from "@/components/shared/section-heading";
 import { FadeIn } from "@/components/shared/fade-in";
 
 interface CountdownSectionProps {
+  courseTitle?: string;
   cohortStartDate?: string;
   seatsTotal?: number;
   seatsAvailable?: number;
@@ -36,6 +37,7 @@ function calculateTimeLeft(targetDate: Date): TimeLeft {
 }
 
 export function CountdownSection({
+  courseTitle = "Autodesk Revit Foundation",
   cohortStartDate = "2026-08-05",
   seatsTotal = 15,
   seatsAvailable = 15,
@@ -53,16 +55,20 @@ export function CountdownSection({
   });
 
   useEffect(() => {
-    setTimeLeft(calculateTimeLeft(targetDate));
+    const initialFrame = window.requestAnimationFrame(() => {
+      setTimeLeft(calculateTimeLeft(targetDate));
+    });
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft(targetDate));
     }, 1000);
-    return () => clearInterval(timer);
-  }, [cohortStartDate]);
+    return () => {
+      window.cancelAnimationFrame(initialFrame);
+      clearInterval(timer);
+    };
+  }, [targetDate]);
 
   const seatsTaken = seatsTotal - seatsAvailable;
   const fillPercentage = Math.round((seatsTaken / seatsTotal) * 100);
-
   const timeUnits = [
     { label: "Days", value: timeLeft.days },
     { label: "Hours", value: timeLeft.hours },
@@ -75,8 +81,10 @@ export function CountdownSection({
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           badge="Next Cohort"
-          title="Secure Your Seat"
-          subtitle="Limited spots available for our upcoming Revit Foundation cohort. Register before seats fill up."
+          title={courseTitle}
+          subtitle={`The next face-to-face cohort begins on ${formatDate(
+            cohortStartDate
+          )}. Follow the countdown to the start of training.`}
         />
 
         <div className="mx-auto max-w-3xl">

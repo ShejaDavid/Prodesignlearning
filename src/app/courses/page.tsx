@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MagneticEnrollButton } from "@/components/shared/magnetic-enroll-button";
 import {
   Card,
   CardContent,
@@ -11,9 +12,37 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FadeIn } from "@/components/ui/fade-in";
+import { RevealCard } from "@/components/shared/reveal-card";
 import { SITE_CONFIG, SEO_KEYWORDS } from "@/lib/constants";
 import { getPublicCourses } from "@/lib/public-courses";
 import { formatCurrency, formatDuration } from "@/lib/utils";
+
+const COURSE_STATUS_BADGES = {
+  active: {
+    label: "Active",
+    className: "bg-success/10 text-success",
+    button: "View Course",
+    disabled: false,
+  },
+  "fully-booked": {
+    label: "Fully booked",
+    className: "bg-amber-50 text-amber-700",
+    button: "Register for Next Cohort",
+    disabled: false,
+  },
+  "new-cohort-coming-soon": {
+    label: "New cohort coming soon",
+    className: "bg-blue-50 text-blue-700",
+    button: "Register Interest",
+    disabled: false,
+  },
+  "coming-soon": {
+    label: "Coming soon",
+    className: "bg-muted text-muted-foreground",
+    button: "Coming Soon",
+    disabled: true,
+  },
+} as const;
 
 export const metadata: Metadata = {
   title: "Courses",
@@ -47,27 +76,17 @@ export default async function CoursesPage() {
       <section className="container mx-auto max-w-7xl px-4 py-16">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {courses.map((course, index) => {
-            const isFull = course.isActive && (course.nextCohort?.seatsAvailable ?? 0) <= 0;
-            const statusLabel = course.isActive
-              ? isFull
-                ? "Full Booked"
-                : "Enrolling Now"
-              : "Coming Soon";
-            const statusClassName = course.isActive
-              ? isFull
-                ? "bg-amber-50 text-amber-700"
-                : "bg-success/10 text-success"
-              : "bg-muted text-muted-foreground";
+            const status = COURSE_STATUS_BADGES[course.status];
 
             return (
-              <FadeIn key={course.slug} delay={index * 0.05}>
+              <RevealCard key={course.slug} index={index}>
                 <Card className="flex h-full flex-col transition-shadow hover:premium-shadow">
                   <CardHeader>
                     <div className="mb-2 flex items-center justify-between">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${statusClassName}`}
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${status.className}`}
                       >
-                        {statusLabel}
+                        {status.label}
                       </span>
                       {course.durationHours > 0 && (
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -95,21 +114,22 @@ export default async function CoursesPage() {
                     )}
                   </CardContent>
                   <CardFooter>
-                    {course.isActive ? (
-                      <Button variant="premium" className="w-full" asChild>
-                        <Link href={`/courses/${course.slug}`}>
-                          {isFull ? "Register for Next Cohort" : "View Course"}
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
-                      </Button>
+                    {!status.disabled ? (
+                      <MagneticEnrollButton
+                        href={`/courses/${course.slug}`}
+                        icon="arrow-right"
+                        className="w-full"
+                      >
+                        {status.button}
+                      </MagneticEnrollButton>
                     ) : (
                       <Button variant="outline" className="w-full" disabled>
-                        Coming Soon
+                        {status.button}
                       </Button>
                     )}
                   </CardFooter>
                 </Card>
-              </FadeIn>
+              </RevealCard>
             );
           })}
         </div>

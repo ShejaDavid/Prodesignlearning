@@ -1,5 +1,10 @@
 import { FUTURE_COURSES } from "@/lib/constants";
 
+export interface InstructorPerson {
+  name: string;
+  image?: string;
+}
+
 export interface Instructor {
   name: string;
   title: string;
@@ -7,6 +12,9 @@ export interface Instructor {
   image?: string;
   credentials: string[];
   experienceYears: number;
+  // Individual trainers (name + optional photo) for co-taught courses. When
+  // present, each person shows their own avatar in the instructor section.
+  people?: InstructorPerson[];
 }
 
 export interface CurriculumModule {
@@ -44,7 +52,7 @@ export interface Course {
   taxRate: number;
   durationHours: number;
   durationDays: number;
-  status: "active" | "coming-soon";
+  status: "active" | "fully-booked" | "new-cohort-coming-soon" | "coming-soon";
   instructor: Instructor;
   curriculum: CurriculumModule[];
   learningOutcomes: string[];
@@ -79,7 +87,7 @@ const REVIT_FOUNDATION: Course = {
   status: "active",
   instructor: {
     name: "Arvish Ramseebaluck & Lamhesh Narain",
-    title: "Revit & BIM Trainers",
+    title: "Revit & BIM Trainer",
     bio: "Our Foundations of Revit trainers bring hands-on BIM and CAD experience spanning architecture, structural, and MEP disciplines. The teaching approach combines guided modelling sessions, real project examples, and practical exercises so every participant — regardless of discipline — leaves with a working multi-storey Revit model.",
     credentials: [
       "Autodesk Revit Practitioners",
@@ -87,6 +95,10 @@ const REVIT_FOUNDATION: Course = {
       "MQA Approved Training Delivery",
     ],
     experienceYears: 10,
+    people: [
+      { name: "Arvish Ramseebaluck" },
+      { name: "Lamhesh Narain" },
+    ],
   },
   curriculum: [
     {
@@ -222,8 +234,8 @@ const REVIT_FOUNDATION: Course = {
     },
     {
       icon: "MessageCircle",
-      title: "Face-to-Face Delivery",
-      description: "Instructor-led training, max 15 participants per session.",
+      title: "Instructor Support via WhatsApp",
+      description: "Get follow-up guidance and answers from the training team between sessions.",
     },
   ],
   faq: [
@@ -268,10 +280,9 @@ const REVIT_FOUNDATION: Course = {
       id: "cohort-2026-08-05",
       startDate: "2026-08-05",
       endDate: "2026-08-07",
-      // NOTE: exact session clock-times not provided — confirm before publishing.
       schedule: "5, 6 & 7 August 2026 · 2-hour sessions",
       seatsTotal: 15,
-      seatsAvailable: 15,
+      seatsAvailable: 0,
     },
   ],
   brochureUrl: "/brochures/revit-foundation.pdf",
@@ -291,7 +302,7 @@ const MANAGING_LEED_PROJECTS: Course = {
   status: "active",
   instructor: {
     name: "Niraj Boodhoo & Urmila Rupear",
-    title: "LEED & Sustainable Construction Trainers",
+    title: "LEED & Sustainable Construction Trainer",
     bio: "Our LEED training team combines practical contractor-side project delivery experience with sustainable construction expertise, guiding participants through real-world case studies, workshop exercises, and sample LEED documentation review.",
     credentials: [
       "LEED Project Delivery Practitioners",
@@ -299,6 +310,10 @@ const MANAGING_LEED_PROJECTS: Course = {
       "MQA Approved Training Delivery",
     ],
     experienceYears: 10,
+    people: [
+      { name: "Niraj Boodhoo" },
+      { name: "Urmila Rupear" },
+    ],
   },
   curriculum: [
     {
@@ -453,8 +468,8 @@ const MANAGING_LEED_PROJECTS: Course = {
     },
     {
       icon: "MessageCircle",
-      title: "Face-to-Face Delivery",
-      description: "Instructor-led training combining presentations, discussions, and workshop exercises.",
+      title: "Instructor Support via WhatsApp",
+      description: "Stay connected with the training team for follow-up questions and practical guidance.",
     },
   ],
   faq: [
@@ -625,8 +640,10 @@ export function getAllCourses(): Course[] {
       durationHours: 0,
       durationDays: 0,
       status:
-        futureCourse.status === "registration-open" || futureCourse.status === "full-booked"
+        futureCourse.status === "registration-open"
           ? "active"
+          : futureCourse.status === "full-booked"
+            ? "fully-booked"
           : "coming-soon",
       instructor: REVIT_FOUNDATION.instructor,
       curriculum: [],

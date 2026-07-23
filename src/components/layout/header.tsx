@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -20,6 +19,7 @@ import {
 import { NAV_LINKS, SITE_CONFIG } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { UserMenu } from "@/components/layout/user-menu";
 
 export function Header() {
@@ -38,7 +38,8 @@ export function Header() {
   const dashboardHref = isAdmin ? "/admin" : "/dashboard";
 
   useEffect(() => {
-    setMounted(true);
+    const frame = window.requestAnimationFrame(() => setMounted(true));
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
@@ -47,10 +48,6 @@ export function Header() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
@@ -63,29 +60,35 @@ export function Header() {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };
 
+  const handleMobileNavigate = () => {
+    setMobileOpen(false);
+  };
+
   return (
     <header
       className={cn(
         "sticky top-0 z-50 w-full border-b border-transparent transition-all duration-300",
-        scrolled && "glass border-border/50 premium-shadow"
+        scrolled ? "glass border-border/50 premium-shadow" : "bg-transparent"
       )}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-16 items-center justify-center rounded-xl bg-white px-1 ring-1 ring-border/60">
-            <Image
-              src="/logo.png"
-              alt="Prodesign Learning Centre"
-              width={151}
-              height={76}
-              priority
-              className="h-7 w-auto"
-            />
-          </span>
-          <span className="text-lg font-bold tracking-tight text-foreground">
-            Prodesign Learning Centre
-          </span>
-        </Link>
+      <div
+        className={cn(
+          "mx-auto flex max-w-7xl items-center justify-between px-4 transition-all duration-300 sm:px-6 lg:px-8",
+          scrolled ? "h-16" : "h-[4.6rem]"
+        )}
+      >
+        <BrandLogo
+          variant="header"
+          priority
+          className={cn(
+            "transition-all duration-300",
+            scrolled ? "rounded-xl px-2.5 py-1.5" : "rounded-2xl px-3 py-2"
+          )}
+          imageClassName={cn(
+            "transition-all duration-300",
+            scrolled ? "h-7 sm:h-8" : "h-8 sm:h-9"
+          )}
+        />
 
         <nav className="hidden items-center gap-1 lg:flex">
           {NAV_LINKS.map((link) => (
@@ -93,7 +96,7 @@ export function Header() {
               key={link.href}
               href={link.href}
               className={cn(
-                "rounded-xl px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
+                "rounded-xl px-3 py-2 text-sm font-medium transition-all duration-300 hover:bg-muted",
                 pathname === link.href
                   ? "text-secondary"
                   : "text-muted-foreground hover:text-foreground"
@@ -196,6 +199,7 @@ export function Header() {
                 >
                   <Link
                     href={link.href}
+                    onClick={handleMobileNavigate}
                     className={cn(
                       "block rounded-xl px-4 py-3 text-sm font-medium transition-colors hover:bg-muted",
                       pathname === link.href
@@ -219,6 +223,7 @@ export function Header() {
                     href={SITE_CONFIG.mainSiteUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={handleMobileNavigate}
                   >
                     Main Website
                     <ExternalLink className="h-4 w-4" />
@@ -243,7 +248,7 @@ export function Header() {
                       </div>
                     </div>
                     <Button variant="outline" asChild>
-                      <Link href={dashboardHref}>
+                      <Link href={dashboardHref} onClick={handleMobileNavigate}>
                         {isAdmin ? (
                           <ShieldCheck className="h-4 w-4" />
                         ) : (

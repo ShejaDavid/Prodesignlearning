@@ -34,7 +34,7 @@ Premium Autodesk training platform for ProDesign Mauritius — convert visitors 
 | Auth | NextAuth.js v5 |
 | Email | Resend |
 | Payments | MIPS-ready layer |
-| Deployment | Vercel |
+
 
 ---
 

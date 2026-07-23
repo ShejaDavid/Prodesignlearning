@@ -1,0 +1,356 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+}
+
+enum ExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum EnrollmentStatus {
+  PENDING
+  PAYMENT_PENDING
+  ENROLLED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  MIPS
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  VOID
+}
+
+enum CohortStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum ContactStatus {
+  NEW
+  READ
+  REPLIED
+}
+
+enum EmailStatus {
+  SENT
+  FAILED
+  BOUNCED
+}
+
+enum DeliveryMethod {
+  IN_PERSON
+  ONLINE
+  HYBRID
+}
+
+enum VideoProvider {
+  URL
+  MUX
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  // Null until the student activates their account via the set-password link.
+  // An unactivated user exists (created at registration) but cannot log in yet.
+  passwordHash String?   @map("password_hash")
+  role         UserRole  @default(STUDENT)
+  firstName    String    @map("first_name")
+  lastName     String    @map("last_name")
+  phone        String?
+  dateOfBirth  DateTime? @map("date_of_birth")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  profile           StudentProfile?
+  enrollments       Enrollment[]
+  payments          Payment[]
+  invoices          Invoice[]
+  certificates      Certificate[]
+  emailLogs         EmailLog[]
+  passwordSetTokens PasswordSetToken[]
+
+  @@map("users")
+}
+
+model PasswordSetToken {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  // SHA-256 hash of the token. The raw token only ever exists in the emailed
+  // link, never at rest, so a leaked DB row can't be used to set a password.
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_set_tokens")
+}
+
+model StudentProfile {
+  id              String          @id @default(cuid())
+  userId          String          @unique @map("user_id")
+  occupation      String?
+  company         String?
+  experienceLevel ExperienceLevel @default(BEGINNER) @map("experience_level")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("student_profiles")
+}
+
+model Course {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  title            String
+  description      String   @db.Text
+  overview         String   @db.Text
+  price            Decimal  @db.Decimal(10, 2)
+  taxRate          Decimal  @default(0.15) @map("tax_rate") @db.Decimal(5, 4)
+  durationHours    Int      @map("duration_hours")
+  durationDays     Int      @default(1) @map("duration_days")
+  maxSeats         Int      @default(20) @map("max_seats")
+  instructorName   String   @map("instructor_name")
+  instructorBio    String   @map("instructor_bio") @db.Text
+  instructorImage  String?  @map("instructor_image")
+  curriculum       Json     @default("[]")
+  learningOutcomes Json     @default("[]") @map("learning_outcomes")
+  features         Json     @default("[]")
+  isActive         Boolean  @default(true) @map("is_active")
+  isFeatured       Boolean  @default(false) @map("is_featured")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  modules      CourseModule[]
+  cohorts      Cohort[]
+  enrollments  Enrollment[]
+  certificates Certificate[]
+
+  @@map("courses")
+}
+
+model CourseModule {
+  id           String @id @default(cuid())
+  courseId     String @map("course_id")
+  moduleNumber Int    @map("module_number")
+  title        String
+  description  String @db.Text
+  topics       Json   @default("[]")
+  sortOrder    Int    @default(0) @map("sort_order")
+
+  course Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  videos Video[]
+
+  @@map("course_modules")
+}
+
+model Video {
+  id              String   @id @default(cuid())
+  moduleId        String   @map("module_id")
+  title           String
+  description     String?  @db.Text
+  provider        VideoProvider @default(URL)
+  // Unlisted YouTube/Vimeo URL, or a direct video-file URL. For Mux videos,
+  // keep this null and use muxPlaybackId instead.
+  url             String?
+  muxAssetId      String?  @map("mux_asset_id")
+  muxPlaybackId   String?  @map("mux_playback_id")
+  durationMinutes Int?     @map("duration_minutes")
+  sortOrder       Int      @default(0) @map("sort_order")
+  // Preview videos may be shown publicly (e.g. on the course marketing page).
+  isPreview       Boolean  @default(false) @map("is_preview")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  module CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@index([moduleId])
+  @@map("videos")
+}
+
+model Cohort {
+  id             String         @id @default(cuid())
+  courseId       String         @map("course_id")
+  name           String
+  startDate      DateTime       @map("start_date")
+  endDate        DateTime?      @map("end_date")
+  schedule       String
+  deliveryMethod DeliveryMethod @default(IN_PERSON) @map("delivery_method")
+  venue          String?
+  seatsTotal     Int            @map("seats_total")
+  seatsAvailable Int            @map("seats_available")
+  status         CohortStatus   @default(UPCOMING)
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  course      Course       @relation(fields: [courseId], references: [id])
+  enrollments Enrollment[]
+
+  @@map("cohorts")
+}
+
+model Enrollment {
+  id              String           @id @default(cuid())
+  userId          String           @map("user_id")
+  courseId        String           @map("course_id")
+  cohortId        String           @map("cohort_id")
+  status          EnrollmentStatus @default(PENDING)
+  enrolledAt      DateTime?        @map("enrolled_at")
+  completedAt     DateTime?        @map("completed_at")
+  // Null = access never expires. The learn page requires this to be null or in
+  // the future, on top of status = ENROLLED.
+  accessExpiresAt DateTime?        @map("access_expires_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  user        User         @relation(fields: [userId], references: [id])
+  course      Course       @relation(fields: [courseId], references: [id])
+  cohort      Cohort       @relation(fields: [cohortId], references: [id])
+  payment     Payment?
+  certificate Certificate?
+
+  @@unique([userId, cohortId])
+  @@map("enrollments")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  userId        String        @map("user_id")
+  enrollmentId  String        @unique @map("enrollment_id")
+  amount        Decimal       @db.Decimal(10, 2)
+  taxAmount     Decimal       @map("tax_amount") @db.Decimal(10, 2)
+  totalAmount   Decimal       @map("total_amount") @db.Decimal(10, 2)
+  currency      String        @default("MUR")
+  method        PaymentMethod @default(CREDIT_CARD)
+  status        PaymentStatus @default(PENDING)
+  transactionId String?       @map("transaction_id")
+  mipsReference String?       @map("mips_reference")
+  metadata      Json          @default("{}")
+  paidAt        DateTime?     @map("paid_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  user       User       @relation(fields: [userId], references: [id])
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+  invoice    Invoice?
+
+  @@map("payments")
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  userId        String        @map("user_id")
+  paymentId     String        @unique @map("payment_id")
+  invoiceNumber String        @unique @map("invoice_number")
+  subtotal      Decimal       @db.Decimal(10, 2)
+  taxAmount     Decimal       @map("tax_amount") @db.Decimal(10, 2)
+  totalAmount   Decimal       @map("total_amount") @db.Decimal(10, 2)
+  currency      String        @default("MUR")
+  pdfUrl        String?       @map("pdf_url")
+  status        InvoiceStatus @default(DRAFT)
+  issuedAt      DateTime?     @map("issued_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id])
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@map("invoices")
+}
+
+model Certificate {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  enrollmentId      String   @unique @map("enrollment_id")
+  courseId          String   @map("course_id")
+  certificateNumber String   @unique @map("certificate_number")
+  pdfUrl            String?  @map("pdf_url")
+  issuedAt          DateTime @default(now()) @map("issued_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  user       User       @relation(fields: [userId], references: [id])
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+  course     Course     @relation(fields: [courseId], references: [id])
+
+  @@map("certificates")
+}
+
+model ContactSubmission {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String        @db.Text
+  status    ContactStatus @default(NEW)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@map("contact_submissions")
+}
+
+model NewsletterSubscriber {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  isActive     Boolean  @default(true) @map("is_active")
+  subscribedAt DateTime @default(now()) @map("subscribed_at")
+
+  @@map("newsletter_subscribers")
+}
+
+model EmailLog {
+  id        String      @id @default(cuid())
+  userId    String?     @map("user_id")
+  emailType String      @map("email_type")
+  recipient String
+  subject   String
+  status    EmailStatus @default(SENT)
+  metadata  Json        @default("{}")
+  sentAt    DateTime    @default(now()) @map("sent_at")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("email_logs")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  eventType String   @map("event_type")
+  pagePath  String   @map("page_path")
+  userId    String?  @map("user_id")
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("analytics_events")
+}
